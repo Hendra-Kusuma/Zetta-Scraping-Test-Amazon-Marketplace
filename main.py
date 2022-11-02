@@ -1,7 +1,8 @@
+import json
 from bs4 import BeautifulSoup
-import requests
 import os
 from playwright.sync_api import sync_playwright
+import pandas as pd
 
 params = {
     'k': 'computer monitor',
@@ -26,6 +27,7 @@ with sync_playwright() as p:
     page.click('input#signInSubmit')
     page.goto('https://www.amazon.com/s?k=computer+monitor&sprefix=compu%2Caps%2C451&ref=nb_sb_ss_pltr-ranker'
               '-1hour_2_5')
+    # page.goto('https://www.amazon.com/s?k=nokia&crid=2RQWKTJW974O1&sprefix=nokia%2Caps%2C354&ref=nb_sb_noss_2')
     page.is_visible('#search')
     html = page.inner_html('#search')
 
@@ -46,67 +48,76 @@ def Get_Total_Pages():
 
 
 def Get_All_Item():
+    global price, star
     params = {
         'k': 'computer monitor',
         'sprefix': 'compu,aps,451',
         'ref': 'nb_sb_ss_pltr-ranker-1hour_2_5'
     }
     soup = BeautifulSoup(html, 'html.parser')
-    # result = soup.find_all('div',"sg-col-inner")
-
-    title = soup.find_all('span', "a-size-medium a-color-base a-text-normal")
-    prices = soup.find_all('span', 'a-price-whole')
-    cents = soup.find_all('span', 'a-price-fraction')
-    stars = soup.find_all('span', 'a-icon-alt')
-    imagess = soup.find_all('div', 'a-section aok-relative s-image-fixed-height')
-    for images in imagess:
-        image = images.find('img')['src']
-
-
-
-    data_list = []
-
-    titles = soup.find_all('span', "a-size-medium a-color-base a-text-normal")
-    for titlesss in titles:
-        title = titlesss.text
-
-    prices = soup.find_all('span', 'a-price-whole')
-    for pricess in prices:
-        price = pricess.text
-
-    cents = soup.find_all('span', 'a-price-fraction')
-    for centss in cents:
-        cent = centss.text
-
+    result = soup.find_all('div',"s-card-container s-overflow-hidden aok-relative puis-include-content-margin puis s-latency-cf-section s-card-border")
+    prices = soup.find_all('span', attrs={'data-a-color':'base'})
+    data_result = []
+    for pricess in prices :
+        price = pricess.find('span', attrs={'class':'a-offscreen'}).text
     stars = soup.find_all('span', 'a-icon-alt')
     for starss in stars:
         star = starss.text
-
-    imagess = soup.find_all('div', 'a-section aok-relative s-image-fixed-height')
-    for images in imagess:
+    for item in result:
+        title = item.find('span', "a-size-medium a-color-base a-text-normal").text
+        images = item.find('div', 'a-section aok-relative s-image-fixed-height')
         image = images.find('img')['src']
 
-    # Sorting Data
+        # Sorting Data
         data_dict = {
             'title': title,
-            'cent': cent,
             'price': price,
-            'image': image,
             'star': star,
+            'image': image,
         }
+        data_result.append(data_dict)
 
-        data_list.append(data_dict)
-        print(data_list)
+    # Write Json File
+    try:
+        os.mkdir('json_result')
+    except FileExistsError:
+        pass
 
-        # Write Json File
-        try:
-            os.mkdir('json_result')
-        except FileExistsError:
-            pass
+    with open(f'json_result/data_result.json', 'w+') as json_data:
+        json.dump(data_result, json_data)
+    print(f'json page created')
 
-            with open(f'json_result/{query}_in_{location}_page_{counter}.json', 'w+') as json_data:
-                json.dump(job_list, json_data)
-        print(f'json page {counter} created')
+
+
+
+
+    # titles = soup.find_all('span', "a-size-medium a-color-base a-text-normal")
+    # for titlesss in titles:
+    #     title = titlesss.text
+    #
+    # prices = soup.find_all('span', 'a-price-whole')
+    # for pricess in prices:
+    #     price = pricess.text
+    #     print(price)
+    #
+    # cents = soup.find_all('span', 'a-price-fraction')
+    # for centss in cents:
+    #     cent = centss.text
+    #
+    # stars = soup.find_all('span', 'a-icon-alt')
+    # for starss in stars:
+    #     star = starss.text
+    #
+    # imagess = soup.find_all('div', 'a-section aok-relative s-image-fixed-height')
+    # for images in imagess:
+    #     image = images.find('img')['src']
+
+
+
+
+
+
+
 
 
 
