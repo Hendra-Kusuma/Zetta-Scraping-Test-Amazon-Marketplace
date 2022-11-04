@@ -88,8 +88,6 @@ def Get_All_Item(pages):
             pass
         except NameError:
             pass
-        except None:
-            price = 'not have a price'
 
     # Write Json File
     try:
